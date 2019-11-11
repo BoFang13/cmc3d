@@ -10,7 +10,7 @@ class C3D(nn.Module):
         super(C3D, self).__init__()
         self.with_classifier = with_classifier
         self.num_classes = num_classes
-        self.return_features = return_features
+        self.return_feature = return_features
         self.conv1 = conv3d(3, 64);
         self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
 
@@ -34,7 +34,7 @@ class C3D(nn.Module):
             self.linear = nn.Linear(512, self.num_classes)
 
 
-    def subfoward(self, x):
+    def subforward(self, x):
         x = self.conv1(x)
 
         x = self.pool1(x)
