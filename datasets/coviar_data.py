@@ -13,6 +13,7 @@ import cv2
 import torch
 import torch.utils.data as data
 import argparse
+from torchvision import transforms
 
 from coviar import get_num_frames
 from coviar import load
@@ -69,11 +70,10 @@ def color_aug(img, random_h=36, random_l=50, random_s=50):
     img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_HLS2BGR)
     return img
 
-class CoviarData(data.dataset):
+class CoviarData(data.Dataset):
     def __init__(self, data_root, data_name,
                  video_list,
                  representation,
-                 transform,
                  num_segments,
                  is_train,
                  accumulate):
@@ -82,9 +82,13 @@ class CoviarData(data.dataset):
         self._data_name = data_name
         self._num_segments = num_segments
         self._representation = representation
-        self._transform = transform
         self._is_train = is_train
         self._accumulate = accumulate
+        self._transform = transforms.Compose([
+            transforms.Resize((128, 171)),
+            transforms.CenterCrop(112),
+            transforms.ToTensor()
+        ])
 
         self._input_mean = torch.from_numpy(
             np.array([0.485, 0.456, 0.406]).reshape((1, 3, 1, 1))).float()
@@ -241,16 +245,18 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    train_loader = torch.utils.data.DataLoader(
-        CoviarData(
-            args.data_root,
-            args.data_name,
-            video_list=args.train_list,
-            num_segments=args.num_segments,
-            representation=args.representation,
-            transform=model.get_augmentation(),
-            is_train=True,
-            accumulate=(not args.no_accumulation),
-        ),
-        batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True)
+    com = CoviarData('/data2/fb/project/pytorch-coviar-master/data/ucf101/mpeg4_videos',
+                     'ucf101',
+                     '/data2/fb/project/pytorch-coviar-master/data/datalists/ucf101_split1_train.txt',
+                     0, 4, 1, True)
+    train_loader = torch.utils.data.DataLoader(com, batch_size=8,
+                                               shuffle=True, num_workers=1,
+                                               pin_memory=True)
+
+    for i, (clip1, clip2, label) in enumerate(train_loader):
+        print('{} : '.format(i))
+        print('clip1.size: {}'.format(clip1.size()))
+        print('label: {}'.format(label))
+        print('------------------------------------------------------')
+        if i == 5:
+            break
