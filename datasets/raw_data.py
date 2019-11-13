@@ -38,9 +38,9 @@ class RawData(data.Dataset):
 
         self.split = '1'
 
-        train_split_path = os.path.join(root, 'split', 'translist0' + self.split + '.txt')
+        train_split_path = os.path.join(root, 'split', 'trainlist0' + self.split + '.txt')
         self.train_split = pd.read_csv(train_split_path, header=None, sep=' ')[0]
-        test_split_path = os.path.join(root, 'split', 'testlist0' + self.split + 'txt')
+        test_split_path = os.path.join(root, 'split', 'testlist0' + self.split + '.txt')
         self.test_split = pd.read_csv(test_split_path, header=None, sep=' ')[0]
         if mode == 'train':
             self.list = self.train_split
@@ -49,7 +49,7 @@ class RawData(data.Dataset):
 
 
     def __getitem__(self, index):
-        index = index.item()
+        #index = index.item()
 
         if self.args.msr and self.mode == 'train':
             videodata = self.loadcvvideo_msr(index)
@@ -200,5 +200,34 @@ class RawData(data.Dataset):
 
     def __len__(self):
         return len(self.list)
+
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description='Video Clip Reconstruction and Order Prediction')
+    parser.add_argument('--lpls', type=bool, default=False, help='use lpls loss or not')
+    parser.add_argument('--msr', type=bool, default=False, help='use multi sample rate or not')
+    parser.add_argument('--vcop', type=bool, default=True, help='predict video clip or not')
+    parser.add_argument('--num_order', type=int, default=2, help='number of video clip order to predict')
+    parser.add_argument('--gpu', type=str, default='0', help='gpu id')
+    parser.add_argument('--epochs', type=int, default=300, help='number of total epochs to run')
+    parser.add_argument('--exp_name', type=str, default='default', help='experiment name')
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+
+    args = parse_args()
+    com = RawData("/data2/video_data/UCF-101", mode='train', args=args)
+    train_dataloader = DataLoader(com, batch_size=8, num_workers=1, shuffle=False)
+    for i, (clip1, clip2, a) in enumerate(train_dataloader):
+        print('{} :'.format(i))
+        print('clip1.size: {}'.format(clip1.size()))
+        print('clip2.size: {}'.format(clip2.size()))
+        print('a: {}'.format(a))
+        print('---------------------------------------------------------------------')
+        if i == 5:
+            break
 
 
