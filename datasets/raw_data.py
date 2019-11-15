@@ -221,6 +221,8 @@ if __name__ == '__main__':
     args = parse_args()
     com = RawData("/data2/video_data/UCF-101", mode='train', args=args)
     train_dataloader = DataLoader(com, batch_size=8, num_workers=1, shuffle=False)
+    # DataLoader return should be like : Input, Label
+    # clip1, clip2??
     for i, (clip1, clip2, a) in enumerate(train_dataloader):
         print('{} :'.format(i))
         print('clip1.size: {}'.format(clip1.size()))
