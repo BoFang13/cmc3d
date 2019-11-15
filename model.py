@@ -73,6 +73,6 @@ if __name__ == '__main__':
     c3d = C3D(return_features=True)
     c3d = c3d.cuda()
     output = c3d(input_tensor)
-
+    print('input-tensor:', input_tensor.shape)
     print(output.shape)
 
