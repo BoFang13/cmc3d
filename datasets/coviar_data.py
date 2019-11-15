@@ -14,6 +14,7 @@ import torch
 import torch.utils.data as data
 import argparse
 from torchvision import transforms
+from trans import get_augmentation
 
 from coviar import get_num_frames
 from coviar import load
@@ -74,6 +75,7 @@ class CoviarData(data.Dataset):
     def __init__(self, data_root, data_name,
                  video_list,
                  representation,
+                 transform,
                  num_segments,
                  is_train,
                  accumulate):
@@ -84,11 +86,8 @@ class CoviarData(data.Dataset):
         self._representation = representation
         self._is_train = is_train
         self._accumulate = accumulate
-        self._transform = transforms.Compose([
-            transforms.Resize((128, 171)),
-            transforms.CenterCrop(112),
-            transforms.ToTensor()
-        ])
+        self._transform = transform
+        self.toPIL = transforms.ToPILImage()
 
         self._input_mean = torch.from_numpy(
             np.array([0.485, 0.456, 0.406]).reshape((1, 3, 1, 1))).float()
@@ -197,66 +196,18 @@ class CoviarData(data.Dataset):
         return len(self._video_list)
 
 
-def parse_args():
-
-    parser = argparse.ArgumentParser(description='CoViAR')
-    parser.add_argument('--data-name', type=str, choices=['ucf101', 'hmdb51'],
-                        help='dataset name.')
-    parser.add_argument('--data-root', type=str,
-                        help='root of data directory.')
-    parser.add_argument('--train-list', type=str,
-                        help='training example list.')
-    parser.add_argument('--test-list', type=str,
-                        help='testing example list')
-    # Model.
-    parser.add_argument('--representation', type=str, choices=['iframe', 'mv', 'residual'],
-                        help='data representation.')
-    parser.add_argument('--arch', type=str, default="resnet152",
-                        help='base architecture.')
-    parser.add_argument('--num_segments', type=int, default=3,
-                        help='number of TSN segments.')
-    parser.add_argument('--no-accumulation', action='store_true',
-                        help='disable accumulation of motion vectors and residuals.')
-
-    # Training.
-    parser.add_argument('--epochs', default=500, type=int,
-                        help='number of training epochs.')
-    parser.add_argument('--batch-size', default=40, type=int,
-                        help='batch size.')
-    parser.add_argument('--lr', default=0.001, type=float,
-                        help='base learning rate.')
-    parser.add_argument('--lr-steps', default=[200, 300, 400], type=float, nargs="+",
-                        help='epochs to decay learning rate.')
-    parser.add_argument('--lr-decay', default=0.1, type=float,
-                        help='lr decay factor.')
-    parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                        help='weight decay.')
-
-    # Log.
-    parser.add_argument('--eval-freq', default=5, type=int,
-                        help='evaluation frequency (epochs).')
-    parser.add_argument('--workers', default=8, type=int,
-                        help='number of data loader workers.')
-    parser.add_argument('--model-prefix', type=str, default="model",
-                        help="prefix of model name.")
-    parser.add_argument('--gpus', nargs='+', type=int, default=None,
-                        help='gpu ids.')
-
-
 if __name__ == '__main__':
-    args = parse_args()
+    #args = parse_args()
     com = CoviarData('/data2/fb/project/pytorch-coviar-master/data/ucf101/mpeg4_videos',
                      'ucf101',
                      '/data2/fb/project/pytorch-coviar-master/data/datalists/ucf101_split1_train.txt',
-                     0, 4, 1, True)
+                     'residual', get_augmentation(), 4, 1, True)
     train_loader = torch.utils.data.DataLoader(com, batch_size=8,
                                                shuffle=True, num_workers=1,
                                                pin_memory=True)
 
-    for i, (clip1, clip2, label) in enumerate(train_loader):
+    for i, input in enumerate(train_loader):
         print('{} : '.format(i))
-        print('clip1.size: {}'.format(clip1.size()))
-        print('label: {}'.format(label))
         print('------------------------------------------------------')
         if i == 5:
             break
