@@ -2,7 +2,21 @@
 
 import torch
 import torch.nn as nn
-from net_part import *
+#from net_part import *
+
+class conv3d(nn.Module):
+    def __init__(self, in_ch, out_ch):
+        super(conv3d, self).__init__()
+        self.conv3d = nn.Sequential(
+            nn.Conv3d(in_ch, out_ch, 3, padding=1),
+            nn.BatchNorm3d(out_ch),
+            nn.ReLU(),
+
+        )
+
+    def forward(self, x):
+        x = self.conv3d(x)
+        return x
 
 
 class C3D(nn.Module):
@@ -11,22 +25,22 @@ class C3D(nn.Module):
         self.with_classifier = with_classifier
         self.num_classes = num_classes
         self.return_feature = return_features
-        self.conv1 = conv3d(3, 64);
+        self.conv1 = conv3d(3, 64)
         self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
 
-        self.conv2 = conv3d(64, 128);
+        self.conv2 = conv3d(64, 128)
         self.pool2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
 
-        self.conv3_1 = conv3d(128, 256);
-        self.conv3_2 = conv3d(256, 256);
+        self.conv3_1 = conv3d(128, 256)
+        self.conv3_2 = conv3d(256, 256)
         self.pool3 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
 
-        self.conv4_1 = conv3d(256, 512);
-        self.conv4_2 = conv3d(512, 512);
+        self.conv4_1 = conv3d(256, 512)
+        self.conv4_2 = conv3d(512, 512)
         self.pool4 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
 
-        self.conv5_1 = conv3d(512, 512);
-        self.conv5_2 = conv3d(512, 512);
+        self.conv5_1 = conv3d(512, 512)
+        self.conv5_2 = conv3d(512, 512)
         self.pool5 = nn.AdaptiveAvgPool3d(1)
         if self.return_feature:
             self.feature_pool = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))  # 9216
