@@ -227,7 +227,7 @@ class ClassifyDataSet(data.Dataset):
         else:
             test_split_path = os.path.join(root, 'split', 'testlist0' + self.split + '.txt')
             self.test_split = pd.read_csv(test_split_path, header=None)[0]
-        print('Use split' + self.split)
+
 
     def loadcvvideo(self, fname,count_need=16):
         fname = os.path.join(self.root, 'video', fname)
@@ -257,8 +257,8 @@ class ClassifyDataSet(data.Dataset):
             count += 1
 
         capture.release()
+        return buffer, retaining
 
-        return buffer,retaining
     def __len__(self):
         if self.mode == 'train':
             return len(self.train_split)-1
@@ -273,15 +273,15 @@ class ClassifyDataSet(data.Dataset):
             videoname = self.test_split[index]
 
         if self.mode == 'train':
-            videodata,retrain = self.loadcvvideo(videoname,count_need=16)
-            while retrain == False or len(videodata) <16:
+            videodata,retrain = self.loadcvvideo(videoname, count_need=16)
+            #print(np.array(videodata).shape)
+            while retrain == False or len(videodata) < 16:
                 print('reload')
                 index = np.random.randint(self.__len__())
 
                 videoname = self.train_split[index]
                 videodata, retrain = self.loadcvvideo(videoname, count_need=16)
 
-            videodata = self.randomflip(videodata)
 
             video_clips = []
             seed = random.random()
@@ -290,12 +290,12 @@ class ClassifyDataSet(data.Dataset):
                 random.seed(seed)
 
                 frame = self.toPIL(frame)
-
+                # 16帧裁剪为 112 X 112
                 frame = self.transforms(frame)
-
                 video_clips.append(frame)
-
+            #print(np.array(item for item in video_clips).shape)
             clip = torch.stack(video_clips).permute(1,0,2,3)
+            print(clip.shape)
 
         elif self.mode == 'test':
             videodata,retrain = self.loadcvvideo(videoname,count_need=0)
@@ -310,7 +310,7 @@ class ClassifyDataSet(data.Dataset):
 
         return clip, label-1
 
-    def randomflip(self,buffer):
+    def randomflip(self, buffer):
         if np.random.random() <0.5:
             for i, frame in enumerate(buffer):
                 # 对buffer中的帧做水平翻转（flipCode=1）
@@ -318,7 +318,7 @@ class ClassifyDataSet(data.Dataset):
 
         return buffer
 
-    def gettest(self,videodata):
+    def gettest(self, videodata):
         length = len(videodata)
 
         all_clips = []
@@ -328,6 +328,7 @@ class ClassifyDataSet(data.Dataset):
                 clip = videodata[clip_start: clip_start + 16]
                 trans_clip = []
                 seed = random.random()
+
                 for frame in clip:
                         random.seed(seed)
                         frame = self.toPIL(frame) # PIL image
