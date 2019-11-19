@@ -60,8 +60,7 @@ class RawData(data.Dataset):
         clip2 = self.crop(videodata[16:32])
         clip3 = self.crop(videodata[32:48])
 
-        """
-                if not self.args.vcop:
+        if not self.args.vcop:
             seed = random.randint(0, 2)
             if seed == 0:
                 return clip1, clip3, clip2
@@ -86,7 +85,7 @@ class RawData(data.Dataset):
                     return clip1, clip2, torch.tensor(seed)
                 if seed == 1:
                     return clip3, clip1, torch.tensor(seed)
-        """
+
 
 
     def loadcvvideo(self, index):
@@ -359,15 +358,15 @@ def parse_args():
 if __name__ == '__main__':
 
     args = parse_args()
-    com = RawData("/data2/video_data/UCF-101", mode='train', args=args)
-    train_dataloader = DataLoader(com, batch_size=8, num_workers=1, shuffle=False)
+    com = ClassifyDataSet("/data2/video_data/UCF-101", mode='train')
+    train_dataloader = DataLoader(com, batch_size=4, num_workers=1, shuffle=False)
+    print('data length:{}'.format(com.__len__()))
     # DataLoader return should be like : Input, Label
     # clip1, clip2??
-    for i, (clip1, clip2, a) in enumerate(train_dataloader):
+    for i, (data, label) in enumerate(train_dataloader):
         print('{} :'.format(i))
-        print('clip1.size: {}'.format(clip1.size()))
-        print('clip2.size: {}'.format(clip2.size()))
-        print('a: {}'.format(a))
+        print('data.size: {}'.format(data.size()))
+        print('label: {}'.format(label))
         print('---------------------------------------------------------------------')
         if i == 5:
             break
