@@ -195,19 +195,18 @@ def train_raw(train_loader, model, criterion, optimizer, epoch, writer):
             print(p_str)
 
 
-def main1():
+def main():
     model = c3d.C3D(with_classifier=True, num_classes=101)
 
     start_epoch = 1
 
     train_rawdata = ClassifyDataSet(params['dataset'], mode='train')
-    """
+
     if params['data'] == 'UCF-101':
         val_size = 800
     elif params['data'] == 'hmdb':
         val_size = 400
-    """
-    val_size = 400
+
     train_dataset, val_dataset = random_split(train_rawdata, (len(train_rawdata) - val_size, val_size))
 
     print("num_workes:{:d}".format(params['num_workers']))
@@ -405,5 +404,4 @@ if __name__ == '__main__':
     16 compressed video frames and 16 raw video frames trained respectively
     note that two training shared a shared-weight C3D network
     """
-    main2()
-    main1()
+    main()
