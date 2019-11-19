@@ -20,13 +20,15 @@ from trans import get_augmentation
 from coviar import get_num_frames
 from coviar import load
 
+from config import params
 
-GOP_SIZE = 16
+GOP_SIZE = 12
 
 def clip_and_scale(img, size):
     return (img * (127.5 / size)).astype(np.int32)
 
-def get_seg_range(n, num_segments, seg, representation):
+#将包含num frames个帧的视频均分为num segments段，返回每一段的初始值和结束值
+def get_seg_range(n, num_segments, seg, representation):   # n: num_frames
     if representation in ['mv', 'residual']:
         n -= 1
 
@@ -50,6 +52,7 @@ def get_gop_pos(frame_idx, representation):
             gop_pos = GOP_SIZE - 1
     else:
         gop_pos = 0
+
     return gop_index, gop_pos
 
 def color_aug(img, random_h=36, random_l=50, random_s=50):
@@ -95,6 +98,7 @@ class CoviarData(data.Dataset):
         self._input_std = torch.from_numpy(
             np.array([0.229, 0.224, 0.225]).reshape((1, 3, 1, 1))).float()
 
+
         self._load_list(video_list)
 
     def _load_list(self, video_list):
@@ -102,19 +106,21 @@ class CoviarData(data.Dataset):
         with open(video_list, 'r') as f:
             for line in f:
                 video, _, label = line.strip().split()
+                #print('video:{}'.format(video))   video:WritingOnBoard/v_WritingOnBoard_g25_c07.avi
+                #print('-:{}'.format(_))    WritingOnBoard
+                #print('label:{}'.format(int(label)))   99
                 video_path = os.path.join(self._data_root, video[:-4] + '.mp4')
                 self._video_list.append((
                     video_path,
                     int(label),
-                    get_num_frames(video_path)))
-
+                    get_num_frames(video_path)))   # questions about get_num_frames????????????
+        #print(self._video_list)
         print('{} videos loaded.'.format(len(self._video_list)))
 
     def _get_train_frame_index(self, num_frames, seg):
         # Compute the range of the segment
         seg_begin, seg_end = get_seg_range(num_frames, self._num_segments, seg,
                                                     representation=self._representation)
-
         # Sample one frame from the segment
         v_frame_idx = random.randint(seg_begin, seg_end-1)
         return get_gop_pos(v_frame_idx, self._representation)
@@ -142,11 +148,12 @@ class CoviarData(data.Dataset):
             representation_idx = 3
 
 
+        # True:随机选取batch_size个视频
         if self._is_train:
             video_path, label, num_frames = random.choice(self._video_list)
         else:
             video_path, label, num_frames = self._video_list[index]
-
+        #print(video_path)
         frames = []
         for seg in range(self._num_segments):
 
@@ -157,6 +164,7 @@ class CoviarData(data.Dataset):
 
             img = load(video_path, gop_index, gop_pose,
                        representation_idx, self._accumulate)
+            #print(img.shape)
 
             if img is None:
                 print('Error: loading compressed video {} failed.'.format(video_path))
@@ -177,10 +185,12 @@ class CoviarData(data.Dataset):
 
             frames.append(img)
 
+
         frames = self._transform(frames)
 
         frames = np.array(frames)
         frames = np.transpose(frames, (0, 3, 1, 2))
+
         input = torch.from_numpy(frames).float() / 255.0
 
         if self._representation == 'iframe':
@@ -189,6 +199,10 @@ class CoviarData(data.Dataset):
             input = (input - 0.5) / self._input_std
         elif self._representation == 'mv':
             input = (input - 0.5)
+
+        # 为了与raw_data维度保持一致，transpose针对nparray变化维度，permute针对tensor变化维度
+        input = input.permute(1, 0, 2, 3)
+        print(input.shape)
 
         return input, label
 
@@ -199,13 +213,13 @@ class CoviarData(data.Dataset):
 
 if __name__ == '__main__':
     #args = parse_args()
-    com = CoviarData('/data2/fb/project/pytorch-coviar-master/data/ucf101/mpeg4_videos',
+    com = CoviarData(params['mpeg_data'],
                      'ucf101',
-                     '/data2/fb/project/pytorch-coviar-master/data/datalists/ucf101_split1_train.txt',
-                     'residual', get_augmentation(), 3, True, True)
+                     params['mpeg_video_list'],
+                     'residual', get_augmentation(), 16, True, True)
     print('data length:{}'.format(com.__len__()))
     train_loader = torch.utils.data.DataLoader(com, batch_size=4,
-                                               shuffle=True, num_workers=1)
+                                               shuffle=False, num_workers=1)
 
     for i, (data, label) in enumerate(train_loader):
         print('------------------------------------------------------')
