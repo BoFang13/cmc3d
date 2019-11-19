@@ -194,7 +194,7 @@ def train_raw(train_loader, model, criterion, optimizer, epoch, writer):
             )
             print(p_str)
 
-#训练原始数据
+
 def main1():
     model = c3d.C3D(with_classifier=True, num_classes=101)
 
@@ -325,7 +325,7 @@ def train_coviar(train_loader, model, criterion, optimizer, epoch, cur_lr):
                        top5=top5,
                        lr=cur_lr)))
 
-#训练压缩数据
+
 def main2():
     model = c3d.C3D(with_classifier=True, num_classes=101)
 
