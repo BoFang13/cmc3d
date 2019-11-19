@@ -5,6 +5,8 @@ params['num_classes'] = 101
 params['dataset'] = '/data2/video_data/UCF-101'
 #params['dataset'] = '/data/hmdb'
 #params['dataset'] = '/data/kinetics-400'
+params['mpeg_data'] = '/data2/fb/project/pytorch-coviar-master/data/ucf101/mpeg4_videos'
+params['mpeg_video_list'] = '/data2/fb/project/pytorch-coviar-master/data/datalists/ucf101_split1_train.txt'
 
 params['epoch_num'] = 150 #600
 params['batch_size'] = 8
