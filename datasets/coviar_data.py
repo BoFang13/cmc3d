@@ -3,7 +3,6 @@ Two types of data are needed.
 Type 1: 16 frames from a raw video clip
 Type 2: 16 frames from a compressed video(namely 1 P-frame and 15 I-frames)
 """
-
 import os
 import os.path
 import random
@@ -14,6 +13,8 @@ import torch
 import torch.utils.data as data
 import argparse
 from torchvision import transforms
+import sys
+sys.path.append('../')
 from trans import get_augmentation
 
 from coviar import get_num_frames
@@ -52,7 +53,7 @@ def get_gop_pos(frame_idx, representation):
     return gop_index, gop_pos
 
 def color_aug(img, random_h=36, random_l=50, random_s=50):
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(float)  # 颜色空间转换函数
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2HLS).astype(float)
 
     h = (random.random() * 2 - 1.0) * random_h
     l = (random.random() * 2 - 1.0) * random_l
@@ -201,14 +202,16 @@ if __name__ == '__main__':
     com = CoviarData('/data2/fb/project/pytorch-coviar-master/data/ucf101/mpeg4_videos',
                      'ucf101',
                      '/data2/fb/project/pytorch-coviar-master/data/datalists/ucf101_split1_train.txt',
-                     'residual', get_augmentation(), 4, 1, True)
-    train_loader = torch.utils.data.DataLoader(com, batch_size=8,
-                                               shuffle=True, num_workers=1,
-                                               pin_memory=True)
+                     'residual', get_augmentation(), 3, True, True)
+    print('data length:{}'.format(com.__len__()))
+    train_loader = torch.utils.data.DataLoader(com, batch_size=4,
+                                               shuffle=True, num_workers=1)
 
-    for i, input in enumerate(train_loader):
-        print('{} : '.format(i))
+    for i, (data, label) in enumerate(train_loader):
         print('------------------------------------------------------')
+        print('{} : '.format(i))
+        print('data.size: {}'.format(data.size()))
+        print('label: {}'.format(label))
         if i == 5:
             break
 
